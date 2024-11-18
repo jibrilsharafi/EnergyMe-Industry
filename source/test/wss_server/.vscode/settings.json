@@ -1,3 +1,9 @@
 {
-  "C_Cpp.intelliSenseEngine": "default"
+  "C_Cpp.intelliSenseEngine": "default",
+  "idf.flashType": "UART",
+  "idf.portWin": "COM4",
+  "files.associations": {
+    "esp_https_server.h": "c",
+    "keep_alive.h": "c"
+  }
 }
