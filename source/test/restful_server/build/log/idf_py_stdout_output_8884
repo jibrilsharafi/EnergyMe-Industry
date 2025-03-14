@@ -1,0 +1,25 @@
+-- ccache will be used for faster recompilation
+-- Building ESP-IDF components for target esp32
+Using component placed at C:\Users\jibri\esp\v5.3.1\esp-idf\examples\common_components\protocol_examples_common for dependency "protocol_examples_common", specified in C:\Users\jibri\Documents\GitHub\EnergyMe-Industry\source\test\restful_server\main\idf_component.yml
+Processing 3 dependencies:
+[1/3] espressif/mdns (1.4.2)
+[2/3] protocol_examples_common (*) (C:\Users\jibri\esp\v5.3.1\esp-idf\examples\common_components\protocol_examples_common)
+[3/3] idf (5.3.1)
+-- Project sdkconfig file C:/Users/jibri/Documents/GitHub/EnergyMe-Industry/source/test/restful_server/sdkconfig
+Loading defaults file C:/Users/jibri/Documents/GitHub/EnergyMe-Industry/source/test/restful_server/sdkconfig.defaults...
+-- Compiler supported targets: xtensa-esp-elf
+-- App "restful_server" version: 08c7753-dirty
+-- Adding linker script C:/Users/jibri/Documents/GitHub/EnergyMe-Industry/source/test/restful_server/build/esp-idf/esp_system/ld/memory.ld
+-- Adding linker script C:/Users/jibri/Documents/GitHub/EnergyMe-Industry/source/test/restful_server/build/esp-idf/esp_system/ld/sections.ld.in
+-- Adding linker script C:/Users/jibri/esp/v5.3.1/esp-idf/components/esp_rom/esp32/ld/esp32.rom.ld
+-- Adding linker script C:/Users/jibri/esp/v5.3.1/esp-idf/components/esp_rom/esp32/ld/esp32.rom.api.ld
+-- Adding linker script C:/Users/jibri/esp/v5.3.1/esp-idf/components/esp_rom/esp32/ld/esp32.rom.libgcc.ld
+-- Adding linker script C:/Users/jibri/esp/v5.3.1/esp-idf/components/esp_rom/esp32/ld/esp32.rom.newlib-data.ld
+-- Adding linker script C:/Users/jibri/esp/v5.3.1/esp-idf/components/esp_rom/esp32/ld/esp32.rom.syscalls.ld
+-- Adding linker script C:/Users/jibri/esp/v5.3.1/esp-idf/components/esp_rom/esp32/ld/esp32.rom.newlib-funcs.ld
+-- Adding linker script C:/Users/jibri/esp/v5.3.1/esp-idf/components/soc/esp32/ld/esp32.peripherals.ld
+-- Configuring incomplete, errors occurred!
+See also "C:/Users/jibri/Documents/GitHub/EnergyMe-Industry/source/test/restful_server/build/CMakeFiles/CMakeOutput.log".
+[0/1] Re-running CMake...
+FAILED: build.ninja 
+C:\Espressif\tools\cmake\3.24.0\bin\cmake.exe --regenerate-during-build -SC:\Users\jibri\Documents\GitHub\EnergyMe-Industry\source\test\restful_server -BC:\Users\jibri\Documents\GitHub\EnergyMe-Industry\source\test\restful_server\build
