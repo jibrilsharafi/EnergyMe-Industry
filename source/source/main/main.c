@@ -36,6 +36,17 @@ static const char *TAG = "main";
 #define ADE7880_MISO_PIN      GPIO_NUM_11
 #define ADE7880_SCLK_PIN      GPIO_NUM_12
 
+// Multiplexer select pins
+#define MUX_S0_PIN     GPIO_NUM_35  // Physical pin 38
+#define MUX_S1_PIN     GPIO_NUM_36  // Physical pin 37
+#define MUX_S2_PIN     GPIO_NUM_37  // Physical pin 36
+#define MUX_S3_PIN     GPIO_NUM_38  // Physical pin 35
+
+// Add these configuration defines at the top of the file, under the existing defines
+#define MUX_INITIAL_SCAN_ENABLED     1       // 1 to enable initial scan, 0 to disable
+#define MUX_INITIAL_SCAN_INTERVAL_MS 1000    // Time between channels during scan (ms)
+#define MUX_FINAL_CHANNEL            0       // Channel to stay on after scan completes
+
 // ADE7880 registers
 #define ADE7880_VERSION_REG   0xE707   // Version register
 #define ADE7880_AIRMS         0x43C0   // Phase A current RMS
@@ -94,6 +105,51 @@ static void led_init(void)
 
     // Initialize fade service
     ledc_fade_func_install(0);
+}
+
+// Initialize the multiplexer pins
+static void mux_init(void)
+{
+    // Configure multiplexer select pins as outputs
+    gpio_config_t io_conf = {
+        .intr_type = GPIO_INTR_DISABLE,
+        .mode = GPIO_MODE_OUTPUT,
+        .pin_bit_mask = (1ULL << MUX_S0_PIN) | 
+                         (1ULL << MUX_S1_PIN) | 
+                         (1ULL << MUX_S2_PIN) | 
+                         (1ULL << MUX_S3_PIN),
+        .pull_down_en = 0,
+        .pull_up_en = 0
+    };
+    gpio_config(&io_conf);
+    
+    // Initialize all select pins to 0 (channel 0)
+    gpio_set_level(MUX_S0_PIN, 0);
+    gpio_set_level(MUX_S1_PIN, 0);
+    gpio_set_level(MUX_S2_PIN, 0);
+    gpio_set_level(MUX_S3_PIN, 0);
+    
+    ESP_LOGI(TAG, "Multiplexers initialized to channel 0");
+}
+
+
+// Set the multiplexer channel (0-15)
+static void set_mux_channel(uint8_t channel)
+{
+    // Ensure channel is between 0-15
+    channel &= 0x0F;
+    
+    // Set the select pins according to the channel value
+    gpio_set_level(MUX_S0_PIN, channel & 0x01);
+    ESP_LOGD(TAG, "MUX_S0_PIN: %d", channel & 0x01);
+    gpio_set_level(MUX_S1_PIN, (channel >> 1) & 0x01);
+    ESP_LOGD(TAG, "MUX_S1_PIN: %d", (channel >> 1) & 0x01);
+    gpio_set_level(MUX_S2_PIN, (channel >> 2) & 0x01);
+    ESP_LOGD(TAG, "MUX_S2_PIN: %d", (channel >> 2) & 0x01);
+    gpio_set_level(MUX_S3_PIN, (channel >> 3) & 0x01);
+    ESP_LOGD(TAG, "MUX_S3_PIN: %d", (channel >> 3) & 0x01);
+    
+    ESP_LOGI(TAG, "Switched multiplexers to channel %d", channel);
 }
 
 // Set the LED status pattern
@@ -310,49 +366,56 @@ static esp_err_t read_version_register(spi_device_handle_t spi_handle, uint8_t *
     return ret;
 }
 
-// Function to read and print all RMS values
+// Function to read and print all RMS values in a concise format
 static void read_rms_values(spi_device_handle_t spi_handle)
 {
     uint32_t value;
     int32_t signed_value;
+    char phase_currents[128] = {0};
+    char phase_voltages[128] = {0};
+    
+    int pos_current = sprintf(phase_currents, "Currents: ");
+    int pos_voltage = sprintf(phase_voltages, "Voltages: ");
     
     // Phase A current RMS
     if (ade7880_read_register(spi_handle, ADE7880_AIRMS, &value) == ESP_OK) {
-        signed_value = (int32_t)value;  // These are signed values
-        ESP_LOGI(TAG, "Phase A Current RMS: %"PRId32" (0x%08"PRIX32")", signed_value, value);
+        signed_value = (int32_t)value;
+        pos_current += sprintf(phase_currents + pos_current, "A=%" PRId32 ", ", signed_value);
     }
     
     // Phase A voltage RMS
     if (ade7880_read_register(spi_handle, ADE7880_AVRMS, &value) == ESP_OK) {
         signed_value = (int32_t)value;
-        ESP_LOGI(TAG, "Phase A Voltage RMS: %"PRId32" (0x%08"PRIX32")", signed_value, value);
+        pos_voltage += sprintf(phase_voltages + pos_voltage, "A=%" PRId32 ", ", signed_value);
     }
     
     // Phase B current RMS
     if (ade7880_read_register(spi_handle, ADE7880_BIRMS, &value) == ESP_OK) {
         signed_value = (int32_t)value;
-        ESP_LOGI(TAG, "Phase B Current RMS: %"PRId32" (0x%08"PRIX32")", signed_value, value);
+        pos_current += sprintf(phase_currents + pos_current, "B=%" PRId32 ", ", signed_value);
     }
     
     // Phase B voltage RMS
     if (ade7880_read_register(spi_handle, ADE7880_BVRMS, &value) == ESP_OK) {
         signed_value = (int32_t)value;
-        ESP_LOGI(TAG, "Phase B Voltage RMS: %"PRId32" (0x%08"PRIX32")", signed_value, value);
+        pos_voltage += sprintf(phase_voltages + pos_voltage, "B=%" PRId32 ", ", signed_value);
     }
     
     // Phase C current RMS
     if (ade7880_read_register(spi_handle, ADE7880_CIRMS, &value) == ESP_OK) {
         signed_value = (int32_t)value;
-        ESP_LOGI(TAG, "Phase C Current RMS: %"PRId32" (0x%08"PRIX32")", signed_value, value);
+        pos_current += sprintf(phase_currents + pos_current, "C=%" PRId32, signed_value);
     }
     
     // Phase C voltage RMS
     if (ade7880_read_register(spi_handle, ADE7880_CVRMS, &value) == ESP_OK) {
         signed_value = (int32_t)value;
-        ESP_LOGI(TAG, "Phase C Voltage RMS: %"PRId32" (0x%08"PRIX32")", signed_value, value);
+        pos_voltage += sprintf(phase_voltages + pos_voltage, "C=%" PRId32, signed_value);
     }
     
-    // Print separator for readability
+    // Print the concise lines
+    ESP_LOGI(TAG, "%s", phase_currents);
+    ESP_LOGI(TAG, "%s", phase_voltages);
     ESP_LOGI(TAG, "--------------------------------");
 }
 
@@ -405,6 +468,13 @@ static esp_err_t test_register_write_read(spi_device_handle_t spi_handle)
             ESP_LOGW(TAG, "Value mismatch for %s: wrote 0x%06" PRIx32 ", read 0x%06" PRIx32 "", 
                     reg_names[i], test_value, read_value & 0xFFFFFF);
         }
+
+        // Reset to zero for this registers
+        ret = ade7880_write_register(spi_handle, test_registers[i], 0x000000);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to reset %s register", reg_names[i]);
+            return ret;
+        }
         
         // Use different test value for next register
         test_value = (test_value + 0x111111) & 0xFFFFFF;  // Increment but keep to 24 bits
@@ -442,7 +512,13 @@ void app_main(void)
             set_led_status(LED_STATUS_ERROR);
         }
     }
-    
+
+    mux_init();  // Initialize multiplexers
+
+    // Current multiplexer channel
+    uint8_t current_channel = 0;
+    TickType_t last_channel_change = xTaskGetTickCount();
+
     // Reset ADE7880
     ade7880_reset();
     
@@ -484,23 +560,63 @@ void app_main(void)
             ESP_LOGE(TAG, "Failed to start DSP");
             set_led_status(LED_STATUS_ERROR);
         }
+        // Main loop - read RMS values and control multiplexer channels
+        bool initial_scan_completed = false;
 
-        // Main loop - continuously read RMS values
         while (1) {
             set_led_status(LED_STATUS_SUCCESS);
             
             // Read all RMS values
             read_rms_values(spi_handle);
             
+            // Handle multiplexer channel cycling if initial scan is enabled
+            if (MUX_INITIAL_SCAN_ENABLED && !initial_scan_completed) {
+                // Get current time
+                TickType_t current_time = xTaskGetTickCount();
+                
+                // Check if it's time to change the channel
+                if (current_time - last_channel_change >= (MUX_INITIAL_SCAN_INTERVAL_MS / portTICK_PERIOD_MS)) {
+                    if (current_channel < 15) {
+                        // Continue scanning through channels
+                        current_channel++;
+                        set_mux_channel(current_channel);
+                        last_channel_change = current_time;
+                        ESP_LOGI(TAG, "Initial scan: now at channel %d", current_channel);
+                    } else {
+                        // Initial scan completed, switch to final channel
+                        current_channel = MUX_FINAL_CHANNEL;
+                        set_mux_channel(current_channel);
+                        initial_scan_completed = true;
+                        ESP_LOGI(TAG, "Initial scan completed, staying on channel %d", current_channel);
+                    }
+                }
+            } else if (!initial_scan_completed) {
+                // If initial scan is disabled, just go straight to the final channel
+                current_channel = MUX_FINAL_CHANNEL;
+                set_mux_channel(current_channel);
+                initial_scan_completed = true;
+                ESP_LOGI(TAG, "Initial scan disabled, going directly to channel %d", current_channel);
+            }
+            
             // Delay before next reading
             vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
     } else {
-        ESP_LOGE(TAG, "Invalid version read. SPI communication failed");
-        while (1) {
-            set_led_status(LED_STATUS_ERROR);
-        }
+        ESP_LOGE(TAG, "Failed to communicate with ADE7880");
+        set_led_status(LED_STATUS_ERROR);
     }
+    
+    // Clean up SPI bus
+    spi_bus_remove_device(spi_handle);
+    spi_bus_free(SPI_HOST);
+    
+    // Set LED to success state
+    set_led_status(LED_STATUS_SUCCESS);
+    
+    // Delay before restart
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    // Restart the application
+    esp_restart();
 }
 
 // DIGITAL SIGNAL PROCESSOR 
