@@ -61,6 +61,7 @@ typedef struct {
     uint8_t comm_length;      // Communication bit length (8, 16, or 32)
     ade7880_reg_type_t type;  // Register type (for handling byte alignment)
     bool writable;            // Whether the register is writable
+    uint32_t default_value;   // Default value according to datasheet
     const char* name;         // Register name for logging purposes
 } ade7880_reg_t;
 
@@ -72,7 +73,8 @@ static const ade7880_reg_t ADE7880_RUN_REG = {
     .comm_length = 16,
     .type = ADE7880_REG_STANDARD,
     .writable = true,
-    .name = "RUN_REG"
+    .name = "RUN_REG",
+    .default_value = 0x000000
 };
 
 // Version register
@@ -82,7 +84,8 @@ static const ade7880_reg_t ADE7880_VERSION_REG = {
     .comm_length = 8,
     .type = ADE7880_REG_STANDARD,
     .writable = false,
-    .name = "VERSION_REG"
+    .name = "VERSION_REG",
+    .default_value = 0x000000
 };
 
 // DSP RAM Gain registers (need byte shifting)
@@ -92,7 +95,8 @@ static const ade7880_reg_t ADE7880_AIGAIN = {
     .comm_length = 32,
     .type = ADE7880_REG_ZPSE,
     .writable = true,
-    .name = "AIGAIN"
+    .name = "AIGAIN",
+    .default_value = 0x000000
 };
 
 static const ade7880_reg_t ADE7880_AVGAIN = {
@@ -101,7 +105,8 @@ static const ade7880_reg_t ADE7880_AVGAIN = {
     .comm_length = 32,
     .type = ADE7880_REG_ZPSE,
     .writable = true,
-    .name = "AVGAIN"
+    .name = "AVGAIN",
+    .default_value = 0x000000
 };
 
 static const ade7880_reg_t ADE7880_BIGAIN = {
@@ -110,7 +115,8 @@ static const ade7880_reg_t ADE7880_BIGAIN = {
     .comm_length = 32,
     .type = ADE7880_REG_ZPSE,
     .writable = true,
-    .name = "BIGAIN"
+    .name = "BIGAIN",
+    .default_value = 0x000000
 };
 
 static const ade7880_reg_t ADE7880_BVGAIN = {
@@ -119,7 +125,8 @@ static const ade7880_reg_t ADE7880_BVGAIN = {
     .comm_length = 32,
     .type = ADE7880_REG_ZPSE,
     .writable = true,
-    .name = "BVGAIN"
+    .name = "BVGAIN",
+    .default_value = 0x000000
 };
 
 static const ade7880_reg_t ADE7880_CIGAIN = {
@@ -128,7 +135,8 @@ static const ade7880_reg_t ADE7880_CIGAIN = {
     .comm_length = 32,
     .type = ADE7880_REG_ZPSE,
     .writable = true,
-    .name = "CIGAIN"
+    .name = "CIGAIN",
+    .default_value = 0x000000
 };
 
 static const ade7880_reg_t ADE7880_CVGAIN = {
@@ -137,7 +145,8 @@ static const ade7880_reg_t ADE7880_CVGAIN = {
     .comm_length = 32,
     .type = ADE7880_REG_ZPSE,
     .writable = true,
-    .name = "CVGAIN"
+    .name = "CVGAIN",
+    .default_value = 0x000000
 };
 
 // RMS registers (read-only)
@@ -147,7 +156,8 @@ static const ade7880_reg_t ADE7880_AIRMS = {
     .comm_length = 32,
     .type = ADE7880_REG_ZP,
     .writable = false,
-    .name = "AIRMS"
+    .name = "AIRMS",
+    .default_value = 0x000000
 };
 
 static const ade7880_reg_t ADE7880_AVRMS = {
@@ -156,7 +166,8 @@ static const ade7880_reg_t ADE7880_AVRMS = {
     .comm_length = 32,
     .type = ADE7880_REG_ZP,
     .writable = false,
-    .name = "AVRMS"
+    .name = "AVRMS",
+    .default_value = 0x000000
 };
 
 static const ade7880_reg_t ADE7880_BIRMS = {
@@ -165,7 +176,8 @@ static const ade7880_reg_t ADE7880_BIRMS = {
     .comm_length = 32,
     .type = ADE7880_REG_ZP,
     .writable = false,
-    .name = "BIRMS"
+    .name = "BIRMS",
+    .default_value = 0x000000
 };
 
 static const ade7880_reg_t ADE7880_BVRMS = {
@@ -174,7 +186,8 @@ static const ade7880_reg_t ADE7880_BVRMS = {
     .comm_length = 32,
     .type = ADE7880_REG_ZP,
     .writable = false,
-    .name = "BVRMS"
+    .name = "BVRMS",
+    .default_value = 0x000000
 };
 
 static const ade7880_reg_t ADE7880_CIRMS = {
@@ -183,7 +196,8 @@ static const ade7880_reg_t ADE7880_CIRMS = {
     .comm_length = 32,
     .type = ADE7880_REG_ZP,
     .writable = false,
-    .name = "CIRMS"
+    .name = "CIRMS",
+    .default_value = 0x000000
 };
 
 static const ade7880_reg_t ADE7880_CVRMS = {
@@ -192,7 +206,209 @@ static const ade7880_reg_t ADE7880_CVRMS = {
     .comm_length = 32,
     .type = ADE7880_REG_ZP,
     .writable = false,
-    .name = "CVRMS"
+    .name = "CVRMS",
+    .default_value = 0x000000
+};
+
+// Configuration and Control Registers
+static const ade7880_reg_t ADE7880_LINECYC = {
+    .address = 0xE60C,
+    .bit_length = 16,
+    .comm_length = 16,
+    .type = ADE7880_REG_STANDARD,
+    .writable = true,
+    .default_value = 0xFFFF,
+    .name = "LINECYC"
+};
+
+static const ade7880_reg_t ADE7880_ZXTOUT = {
+    .address = 0xE60D,
+    .bit_length = 16,
+    .comm_length = 16,
+    .type = ADE7880_REG_STANDARD,
+    .writable = true,
+    .default_value = 0xFFFF,
+    .name = "ZXTOUT"
+};
+
+static const ade7880_reg_t ADE7880_COMPMODE = {
+    .address = 0xE60E,
+    .bit_length = 16,
+    .comm_length = 16,
+    .type = ADE7880_REG_STANDARD,
+    .writable = true,
+    .default_value = 0x01FF,
+    .name = "COMPMODE"
+};
+
+static const ade7880_reg_t ADE7880_GAIN = {
+    .address = 0xE60F,
+    .bit_length = 16,
+    .comm_length = 16,
+    .type = ADE7880_REG_STANDARD,
+    .writable = true,
+    .default_value = 0x0000,
+    .name = "GAIN"
+};
+
+static const ade7880_reg_t ADE7880_CFMODE = {
+    .address = 0xE610,
+    .bit_length = 16,
+    .comm_length = 16,
+    .type = ADE7880_REG_STANDARD,
+    .writable = true,
+    .default_value = 0x0EA0,
+    .name = "CFMODE"
+};
+
+static const ade7880_reg_t ADE7880_CF1DEN = {
+    .address = 0xE611,
+    .bit_length = 16,
+    .comm_length = 16,
+    .type = ADE7880_REG_STANDARD,
+    .writable = true,
+    .default_value = 0x0000,
+    .name = "CF1DEN"
+};
+
+static const ade7880_reg_t ADE7880_CF2DEN = {
+    .address = 0xE612,
+    .bit_length = 16,
+    .comm_length = 16,
+    .type = ADE7880_REG_STANDARD,
+    .writable = true,
+    .default_value = 0x0000,
+    .name = "CF2DEN"
+};
+
+static const ade7880_reg_t ADE7880_CF3DEN = {
+    .address = 0xE613,
+    .bit_length = 16,
+    .comm_length = 16,
+    .type = ADE7880_REG_STANDARD,
+    .writable = true,
+    .default_value = 0x0000,
+    .name = "CF3DEN"
+};
+
+static const ade7880_reg_t ADE7880_APHCAL = {
+    .address = 0xE614,
+    .bit_length = 10,
+    .comm_length = 16,
+    .type = ADE7880_REG_ZP,
+    .writable = true,
+    .default_value = 0x0000,
+    .name = "APHCAL"
+};
+
+static const ade7880_reg_t ADE7880_BPHCAL = {
+    .address = 0xE615,
+    .bit_length = 10,
+    .comm_length = 16,
+    .type = ADE7880_REG_ZP,
+    .writable = true,
+    .default_value = 0x0000,
+    .name = "BPHCAL"
+};
+
+static const ade7880_reg_t ADE7880_CPHCAL = {
+    .address = 0xE616,
+    .bit_length = 10,
+    .comm_length = 16,
+    .type = ADE7880_REG_ZP,
+    .writable = true,
+    .default_value = 0x0000,
+    .name = "CPHCAL"
+};
+
+static const ade7880_reg_t ADE7880_PHSIGN = {
+    .address = 0xE617,
+    .bit_length = 16,
+    .comm_length = 16,
+    .type = ADE7880_REG_STANDARD,
+    .writable = false,
+    .default_value = 0x0000, // N/A in datasheet, using 0
+    .name = "PHSIGN"
+};
+
+static const ade7880_reg_t ADE7880_CONFIG = {
+    .address = 0xE618,
+    .bit_length = 16,
+    .comm_length = 16,
+    .type = ADE7880_REG_STANDARD,
+    .writable = true,
+    .default_value = 0x0002,
+    .name = "CONFIG"
+};
+
+static const ade7880_reg_t ADE7880_MMODE = {
+    .address = 0xE700,
+    .bit_length = 8,
+    .comm_length = 8,
+    .type = ADE7880_REG_STANDARD,
+    .writable = true,
+    .default_value = 0x1C,
+    .name = "MMODE"
+};
+
+static const ade7880_reg_t ADE7880_ACCMODE = {
+    .address = 0xE701,
+    .bit_length = 8,
+    .comm_length = 8,
+    .type = ADE7880_REG_STANDARD,
+    .writable = true,
+    .default_value = 0x80,
+    .name = "ACCMODE"
+};
+
+static const ade7880_reg_t ADE7880_LCYCMODE = {
+    .address = 0xE702,
+    .bit_length = 8,
+    .comm_length = 8,
+    .type = ADE7880_REG_STANDARD,
+    .writable = true,
+    .default_value = 0x78,
+    .name = "LCYCMODE"
+};
+
+static const ade7880_reg_t ADE7880_PEAKCYC = {
+    .address = 0xE703,
+    .bit_length = 8,
+    .comm_length = 8,
+    .type = ADE7880_REG_STANDARD,
+    .writable = true,
+    .default_value = 0x00,
+    .name = "PEAKCYC"
+};
+
+static const ade7880_reg_t ADE7880_SAGCYC = {
+    .address = 0xE704,
+    .bit_length = 8,
+    .comm_length = 8,
+    .type = ADE7880_REG_STANDARD,
+    .writable = true,
+    .default_value = 0x00,
+    .name = "SAGCYC"
+};
+
+static const ade7880_reg_t ADE7880_CFCYC = {
+    .address = 0xE705,
+    .bit_length = 8,
+    .comm_length = 8,
+    .type = ADE7880_REG_STANDARD,
+    .writable = true,
+    .default_value = 0x01,
+    .name = "CFCYC"
+};
+
+static const ade7880_reg_t ADE7880_HSDC_CFG = {
+    .address = 0xE706,
+    .bit_length = 8,
+    .comm_length = 8,
+    .type = ADE7880_REG_STANDARD,
+    .writable = true,
+    .default_value = 0x00,
+    .name = "HSDC_CFG"
 };
 
 // SPI configuration
@@ -636,6 +852,74 @@ static esp_err_t test_register_write_read(spi_device_handle_t spi_handle)
     return ESP_OK;
 }
 
+static esp_err_t test_default_registers(spi_device_handle_t spi_handle)
+{
+    ESP_LOGI(TAG, "Testing default register values");
+    
+    // Array of registers to test
+    const ade7880_reg_t* test_registers[] = {
+        &ADE7880_LINECYC,
+        &ADE7880_ZXTOUT,
+        &ADE7880_COMPMODE,
+        &ADE7880_GAIN,
+        &ADE7880_CFMODE,
+        &ADE7880_CF1DEN,
+        &ADE7880_CF2DEN,
+        &ADE7880_CF3DEN,
+        &ADE7880_APHCAL,
+        &ADE7880_BPHCAL,
+        &ADE7880_CPHCAL,
+        &ADE7880_PHSIGN,
+        &ADE7880_CONFIG,
+        &ADE7880_MMODE,
+        &ADE7880_ACCMODE,
+        &ADE7880_LCYCMODE,
+        &ADE7880_PEAKCYC,
+        &ADE7880_SAGCYC,
+        &ADE7880_CFCYC,
+        &ADE7880_HSDC_CFG
+    };
+    
+    uint32_t value;
+    esp_err_t ret;
+    int match_count = 0;
+    int total_count = sizeof(test_registers) / sizeof(test_registers[0]);
+    
+    // Test each register
+    for (int i = 0; i < total_count; i++) {
+        const ade7880_reg_t* reg = test_registers[i];
+        
+        // Read the register value
+        ret = ade7880_read_register(spi_handle, reg, &value);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Failed to read %s register: %s", reg->name, esp_err_to_name(ret));
+            continue;
+        }
+        
+        // For 16-bit registers, mask to ignore upper bits
+        if (reg->comm_length == 16) {
+            value &= 0xFFFF;
+        } else if (reg->comm_length == 8) {
+            value &= 0xFF;
+        }
+        
+        // Check if the value matches the default
+        if (value == reg->default_value) {
+            ESP_LOGI(TAG, "%s: Read 0x%04" PRIx32 " - matches expected default", 
+                     reg->name, value);
+            match_count++;
+        } else {
+            ESP_LOGW(TAG, "%s: Read 0x%04" PRIx32 " - DOES NOT match expected default 0x%04" PRIx32 "", 
+                     reg->name, value, reg->default_value);
+        }
+    }
+    
+    ESP_LOGI(TAG, "Default value test complete: %d/%d registers matched defaults",
+             match_count, total_count);
+    
+    return ESP_OK;
+}
+
 // Updated start DSP function
 static esp_err_t ade7880_start_dsp(spi_device_handle_t spi_handle)
 {
@@ -699,7 +983,13 @@ void app_main(void)
     // Expected version is typically 0x02 for ADE7880, but check your device documentation
     if (version != 0) {
         ESP_LOGI(TAG, "Successfully communicated with ADE7880");
-        
+
+        ESP_LOGI(TAG, "Checking default register values...");
+        ret = test_default_registers(spi_handle);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "Default register test failed");
+            set_led_status(LED_STATUS_ERROR);
+        }
         
         // Test register write and read operations
         ret = test_register_write_read(spi_handle);
@@ -714,6 +1004,7 @@ void app_main(void)
             ESP_LOGE(TAG, "Failed to start DSP");
             set_led_status(LED_STATUS_ERROR);
         }
+        
         // Main loop - read RMS values and control multiplexer channels
         bool initial_scan_completed = false;
 
