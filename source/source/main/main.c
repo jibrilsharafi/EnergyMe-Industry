@@ -47,25 +47,153 @@ static const char *TAG = "main";
 #define MUX_INITIAL_SCAN_INTERVAL_MS 1000    // Time between channels during scan (ms)
 #define MUX_FINAL_CHANNEL            0       // Channel to stay on after scan completes
 
-// ADE7880 registers
-#define ADE7880_VERSION_REG   0xE707   // Version register
-#define ADE7880_AIRMS         0x43C0   // Phase A current RMS
-#define ADE7880_AVRMS         0x43C1   // Phase A voltage RMS
-#define ADE7880_BIRMS         0x43C2   // Phase B current RMS
-#define ADE7880_BVRMS         0x43C3   // Phase B voltage RMS
-#define ADE7880_CIRMS         0x43C4   // Phase C current RMS
-#define ADE7880_CVRMS         0x43C5   // Phase C voltage RMS
+// Register type definitions based on ADE7880 datasheet
+typedef enum {
+    ADE7880_REG_STANDARD,   // Standard register - no special handling
+    ADE7880_REG_ZPSE,       // Zero-padded, sign-extended 24-bit register in 32-bit communication
+    ADE7880_REG_ZP          // Zero-padded register (24 or 28-bit) in 32-bit communication
+} ade7880_reg_type_t;
 
-// ADE7880 gain registers
-#define ADE7880_AIGAIN       0x4380   // Phase A current gain adjust
-#define ADE7880_AVGAIN       0x4381   // Phase A voltage gain adjust
-#define ADE7880_BIGAIN       0x4382   // Phase B current gain adjust
-#define ADE7880_BVGAIN       0x4383   // Phase B voltage gain adjust
-#define ADE7880_CIGAIN       0x4384   // Phase C current gain adjust
-#define ADE7880_CVGAIN       0x4385   // Phase C voltage gain adjust
+// Register information structure
+typedef struct {
+    uint16_t address;         // Register address
+    uint8_t bit_length;       // Actual register bit length
+    uint8_t comm_length;      // Communication bit length (8, 16, or 32)
+    ade7880_reg_type_t type;  // Register type (for handling byte alignment)
+    bool writable;            // Whether the register is writable
+    const char* name;         // Register name for logging purposes
+} ade7880_reg_t;
 
-// ADE7880 DSP control registers
-#define ADE7880_RUN_REG     0xE228   // DSP run register
+// Define constants for all registers used in the code
+// DSP Control register
+static const ade7880_reg_t ADE7880_RUN_REG = {
+    .address = 0xE228,
+    .bit_length = 16,
+    .comm_length = 16,
+    .type = ADE7880_REG_STANDARD,
+    .writable = true,
+    .name = "RUN_REG"
+};
+
+// Version register
+static const ade7880_reg_t ADE7880_VERSION_REG = {
+    .address = 0xE707,
+    .bit_length = 8,
+    .comm_length = 8,
+    .type = ADE7880_REG_STANDARD,
+    .writable = false,
+    .name = "VERSION_REG"
+};
+
+// DSP RAM Gain registers (need byte shifting)
+static const ade7880_reg_t ADE7880_AIGAIN = {
+    .address = 0x4380,
+    .bit_length = 24,
+    .comm_length = 32,
+    .type = ADE7880_REG_ZPSE,
+    .writable = true,
+    .name = "AIGAIN"
+};
+
+static const ade7880_reg_t ADE7880_AVGAIN = {
+    .address = 0x4381,
+    .bit_length = 24,
+    .comm_length = 32,
+    .type = ADE7880_REG_ZPSE,
+    .writable = true,
+    .name = "AVGAIN"
+};
+
+static const ade7880_reg_t ADE7880_BIGAIN = {
+    .address = 0x4382,
+    .bit_length = 24,
+    .comm_length = 32,
+    .type = ADE7880_REG_ZPSE,
+    .writable = true,
+    .name = "BIGAIN"
+};
+
+static const ade7880_reg_t ADE7880_BVGAIN = {
+    .address = 0x4383,
+    .bit_length = 24,
+    .comm_length = 32,
+    .type = ADE7880_REG_ZPSE,
+    .writable = true,
+    .name = "BVGAIN"
+};
+
+static const ade7880_reg_t ADE7880_CIGAIN = {
+    .address = 0x4384,
+    .bit_length = 24,
+    .comm_length = 32,
+    .type = ADE7880_REG_ZPSE,
+    .writable = true,
+    .name = "CIGAIN"
+};
+
+static const ade7880_reg_t ADE7880_CVGAIN = {
+    .address = 0x4385,
+    .bit_length = 24,
+    .comm_length = 32,
+    .type = ADE7880_REG_ZPSE,
+    .writable = true,
+    .name = "CVGAIN"
+};
+
+// RMS registers (read-only)
+static const ade7880_reg_t ADE7880_AIRMS = {
+    .address = 0x43C0,
+    .bit_length = 24,
+    .comm_length = 32,
+    .type = ADE7880_REG_ZP,
+    .writable = false,
+    .name = "AIRMS"
+};
+
+static const ade7880_reg_t ADE7880_AVRMS = {
+    .address = 0x43C1,
+    .bit_length = 24,
+    .comm_length = 32,
+    .type = ADE7880_REG_ZP,
+    .writable = false,
+    .name = "AVRMS"
+};
+
+static const ade7880_reg_t ADE7880_BIRMS = {
+    .address = 0x43C2,
+    .bit_length = 24,
+    .comm_length = 32,
+    .type = ADE7880_REG_ZP,
+    .writable = false,
+    .name = "BIRMS"
+};
+
+static const ade7880_reg_t ADE7880_BVRMS = {
+    .address = 0x43C3,
+    .bit_length = 24,
+    .comm_length = 32,
+    .type = ADE7880_REG_ZP,
+    .writable = false,
+    .name = "BVRMS"
+};
+
+static const ade7880_reg_t ADE7880_CIRMS = {
+    .address = 0x43C4,
+    .bit_length = 24,
+    .comm_length = 32,
+    .type = ADE7880_REG_ZP,
+    .writable = false,
+    .name = "CIRMS"
+};
+
+static const ade7880_reg_t ADE7880_CVRMS = {
+    .address = 0x43C5,
+    .bit_length = 24,
+    .comm_length = 32,
+    .type = ADE7880_REG_ZP,
+    .writable = false,
+    .name = "CVRMS"
+};
 
 // SPI configuration
 #define SPI_HOST             SPI2_HOST
@@ -282,91 +410,123 @@ static esp_err_t spi_init(spi_device_handle_t *spi_handle)
     return ESP_OK;
 }
 
-// General function to read a register from ADE7880
-static esp_err_t ade7880_read_register(spi_device_handle_t spi_handle, uint16_t reg_addr, uint32_t *value)
+// Updated function to write to a register using the register information struct
+static esp_err_t ade7880_write_register(spi_device_handle_t spi_handle, 
+                                       const ade7880_reg_t *reg, 
+                                       uint32_t value)
 {
-    // For reading 24/32-bit registers, we need 4 bytes for command and 4 bytes for data
-    uint8_t tx_data[8] = {0};
-    uint8_t rx_data[8] = {0};
+    // Check if register is writable
+    if (!reg->writable) {
+        ESP_LOGE(TAG, "Register %s (0x%04X) is not writable", reg->name, reg->address);
+        return ESP_ERR_INVALID_ARG;
+    }
     
-    // Prepare command to read register
-    tx_data[0] = 0x01;                      // Read operation
-    tx_data[1] = (reg_addr >> 8) & 0xFF;    // High byte of address
-    tx_data[2] = reg_addr & 0xFF;           // Low byte of address
+    uint8_t tx_data[7] = {0};
+    
+    // Prepare command
+    tx_data[0] = 0x00;                   // Write operation
+    tx_data[1] = (reg->address >> 8) & 0xFF; // High byte of address
+    tx_data[2] = reg->address & 0xFF;        // Low byte of address
+    
+    // Set up data portion based on communication length
+    if (reg->comm_length == 32) {
+        tx_data[3] = (value >> 24) & 0xFF;
+        tx_data[4] = (value >> 16) & 0xFF;
+        tx_data[5] = (value >> 8) & 0xFF;
+        tx_data[6] = value & 0xFF;
+    } else if (reg->comm_length == 16) {
+        tx_data[3] = (value >> 8) & 0xFF;
+        tx_data[4] = value & 0xFF;
+    } else { // 8-bit
+        tx_data[3] = value & 0xFF;
+    }
+    
+    // Calculate transaction length in bytes (command byte + address bytes + data bytes)
+    int tx_bytes = 3 + (reg->comm_length / 8);
     
     // Configure SPI transaction
     spi_transaction_t t = {
-        .length = 8 * 8,             // 8 bytes (64 bits)
+        .length = tx_bytes * 8,
+        .tx_buffer = tx_data,
+        .rx_buffer = NULL,
+    };
+    
+    // Execute transaction
+    ESP_LOGD(TAG, "Writing register %s (0x%04X) with value 0x%08" PRIx32, 
+             reg->name, reg->address, value);
+    
+    gpio_set_level(ADE7880_CS_PIN, 0);
+    esp_err_t ret = spi_device_polling_transmit(spi_handle, &t);
+    gpio_set_level(ADE7880_CS_PIN, 1);
+    
+    return ret;
+}
+
+// Updated function to read from a register using the register information struct
+static esp_err_t ade7880_read_register(spi_device_handle_t spi_handle, 
+                                      const ade7880_reg_t *reg, 
+                                      uint32_t *value)
+{
+    uint8_t tx_data[7] = {0};
+    uint8_t rx_data[7] = {0};
+    
+    // Prepare command
+    tx_data[0] = 0x01;                        // Read operation
+    tx_data[1] = (reg->address >> 8) & 0xFF;  // High byte of address
+    tx_data[2] = reg->address & 0xFF;         // Low byte of address
+    
+    // Calculate total bytes to transact (command + address + data)
+    int total_bytes = 3 + (reg->comm_length / 8);
+    
+    // Configure SPI transaction
+    spi_transaction_t t = {
+        .length = total_bytes * 8,
         .tx_buffer = tx_data,
         .rx_buffer = rx_data,
     };
     
     // Execute transaction
-    ESP_LOGD(TAG, "Reading register 0x%04X", reg_addr);
-    gpio_set_level(ADE7880_CS_PIN, 0);  // Assert CS
+    ESP_LOGD(TAG, "Reading register %s (0x%04X)", reg->name, reg->address);
+    
+    gpio_set_level(ADE7880_CS_PIN, 0);
     esp_err_t ret = spi_device_polling_transmit(spi_handle, &t);
-    gpio_set_level(ADE7880_CS_PIN, 1);  // Deassert CS
+    gpio_set_level(ADE7880_CS_PIN, 1);
     
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "SPI transaction failed: %s", esp_err_to_name(ret));
         return ret;
     }
     
-    // For 24-bit registers stored in 32 bits:
-    // The data is returned in rx_data[4:7]
-    *value = ((uint32_t)rx_data[4] << 24) |
-             ((uint32_t)rx_data[5] << 16) |
-             ((uint32_t)rx_data[6] << 8)  |
-             ((uint32_t)rx_data[7]);
+    // Extract the value based on communication length
+    if (reg->comm_length == 32) {
+        // This creates the correct byte ordering for 32-bit reads
+        *value = ((uint32_t)rx_data[3] << 24) |
+                 ((uint32_t)rx_data[4] << 16) |
+                 ((uint32_t)rx_data[5] << 8)  |
+                 ((uint32_t)rx_data[6]);
+                 
+        ESP_LOGD(TAG, "Raw read value: 0x%08" PRIx32, *value);
+    } else if (reg->comm_length == 16) {
+        *value = ((uint32_t)rx_data[3] << 8) | (uint32_t)rx_data[4];
+    } else { // 8-bit
+        *value = (uint32_t)rx_data[3];
+    }
     
     return ESP_OK;
 }
 
-// General function to write a register to ADE7880
-static esp_err_t ade7880_write_register(spi_device_handle_t spi_handle, uint16_t reg_addr, uint32_t value)
-{
-    // For writing 24/32-bit registers, we need 7 bytes (1 for write command, 2 for address, 4 for data)
-    uint8_t tx_data[7] = {0};
-    
-    // Prepare command to write register
-    tx_data[0] = 0x00;                      // Write operation
-    tx_data[1] = (reg_addr >> 8) & 0xFF;    // High byte of address
-    tx_data[2] = reg_addr & 0xFF;           // Low byte of address
-    
-    // 24-bit value in 32-bit field (MSB first)
-    tx_data[3] = (value >> 24) & 0xFF;      // MSB
-    tx_data[4] = (value >> 16) & 0xFF;
-    tx_data[5] = (value >> 8) & 0xFF;
-    tx_data[6] = value & 0xFF;              // LSB
-    
-    // Configure SPI transaction
-    spi_transaction_t t = {
-        .length = 7 * 8,                    // 7 bytes (56 bits)
-        .tx_buffer = tx_data,
-        .rx_buffer = NULL,                  // No need to receive for write operation
-    };
-    
-    // Execute transaction
-    ESP_LOGD(TAG, "Writing register 0x%04X with value 0x%08"PRIX32, reg_addr, value);
-    gpio_set_level(ADE7880_CS_PIN, 0);      // Assert CS
-    esp_err_t ret = spi_device_polling_transmit(spi_handle, &t);
-    gpio_set_level(ADE7880_CS_PIN, 1);      // Deassert CS
-    
-    return ret;
-}
-
-// Function to read version register (8-bit)
+// Function to read version register with updated API
 static esp_err_t read_version_register(spi_device_handle_t spi_handle, uint8_t *version)
 {
     uint32_t value = 0;
-    esp_err_t ret = ade7880_read_register(spi_handle, ADE7880_VERSION_REG, &value);
+    esp_err_t ret = ade7880_read_register(spi_handle, &ADE7880_VERSION_REG, &value);
     if (ret == ESP_OK) {
         *version = (uint8_t)(value & 0xFF);
     }
     return ret;
 }
 
-// Function to read and print all RMS values in a concise format
+// Updated read_rms_values function using the new structs
 static void read_rms_values(spi_device_handle_t spi_handle)
 {
     uint32_t value;
@@ -378,39 +538,39 @@ static void read_rms_values(spi_device_handle_t spi_handle)
     int pos_voltage = sprintf(phase_voltages, "Voltages: ");
     
     // Phase A current RMS
-    if (ade7880_read_register(spi_handle, ADE7880_AIRMS, &value) == ESP_OK) {
+    if (ade7880_read_register(spi_handle, &ADE7880_AIRMS, &value) == ESP_OK) {
         signed_value = (int32_t)value;
-        pos_current += sprintf(phase_currents + pos_current, "A=%" PRId32 ", ", signed_value);
+        pos_current += sprintf(phase_currents + pos_current, "A=%ld, ", signed_value);
     }
     
     // Phase A voltage RMS
-    if (ade7880_read_register(spi_handle, ADE7880_AVRMS, &value) == ESP_OK) {
+    if (ade7880_read_register(spi_handle, &ADE7880_AVRMS, &value) == ESP_OK) {
         signed_value = (int32_t)value;
-        pos_voltage += sprintf(phase_voltages + pos_voltage, "A=%" PRId32 ", ", signed_value);
+        pos_voltage += sprintf(phase_voltages + pos_voltage, "A=%ld, ", signed_value);
     }
     
     // Phase B current RMS
-    if (ade7880_read_register(spi_handle, ADE7880_BIRMS, &value) == ESP_OK) {
+    if (ade7880_read_register(spi_handle, &ADE7880_BIRMS, &value) == ESP_OK) {
         signed_value = (int32_t)value;
-        pos_current += sprintf(phase_currents + pos_current, "B=%" PRId32 ", ", signed_value);
+        pos_current += sprintf(phase_currents + pos_current, "B=%ld, ", signed_value);
     }
     
     // Phase B voltage RMS
-    if (ade7880_read_register(spi_handle, ADE7880_BVRMS, &value) == ESP_OK) {
+    if (ade7880_read_register(spi_handle, &ADE7880_BVRMS, &value) == ESP_OK) {
         signed_value = (int32_t)value;
-        pos_voltage += sprintf(phase_voltages + pos_voltage, "B=%" PRId32 ", ", signed_value);
+        pos_voltage += sprintf(phase_voltages + pos_voltage, "B=%ld, ", signed_value);
     }
     
     // Phase C current RMS
-    if (ade7880_read_register(spi_handle, ADE7880_CIRMS, &value) == ESP_OK) {
+    if (ade7880_read_register(spi_handle, &ADE7880_CIRMS, &value) == ESP_OK) {
         signed_value = (int32_t)value;
-        pos_current += sprintf(phase_currents + pos_current, "C=%" PRId32, signed_value);
+        pos_current += sprintf(phase_currents + pos_current, "C=%ld", signed_value);
     }
     
     // Phase C voltage RMS
-    if (ade7880_read_register(spi_handle, ADE7880_CVRMS, &value) == ESP_OK) {
+    if (ade7880_read_register(spi_handle, &ADE7880_CVRMS, &value) == ESP_OK) {
         signed_value = (int32_t)value;
-        pos_voltage += sprintf(phase_voltages + pos_voltage, "C=%" PRId32, signed_value);
+        pos_voltage += sprintf(phase_voltages + pos_voltage, "C=%ld", signed_value);
     }
     
     // Print the concise lines
@@ -419,7 +579,7 @@ static void read_rms_values(spi_device_handle_t spi_handle)
     ESP_LOGI(TAG, "--------------------------------");
 }
 
-// Function to test register write and read operations
+// Updated test_register_write_read function using the new structs
 static esp_err_t test_register_write_read(spi_device_handle_t spi_handle)
 {
     esp_err_t ret;
@@ -427,67 +587,61 @@ static esp_err_t test_register_write_read(spi_device_handle_t spi_handle)
     uint32_t read_value;
     
     // Test registers to write and read
-    uint16_t test_registers[] = {
-        ADE7880_AIGAIN,
-        ADE7880_AVGAIN,
-        ADE7880_BIGAIN,
-        ADE7880_BVGAIN,
-        ADE7880_CIGAIN,
-        ADE7880_CVGAIN
-    };
-    
-    const char* reg_names[] = {
-        "AIGAIN",
-        "AVGAIN",
-        "BIGAIN",
-        "BVGAIN",
-        "CIGAIN",
-        "CVGAIN"
+    const ade7880_reg_t* test_registers[] = {
+        &ADE7880_AIGAIN,
+        &ADE7880_AVGAIN,
+        &ADE7880_BIGAIN,
+        &ADE7880_BVGAIN,
+        &ADE7880_CIGAIN,
+        &ADE7880_CVGAIN
     };
     
     // Test each register
     for (int i = 0; i < sizeof(test_registers) / sizeof(test_registers[0]); i++) {
+        const ade7880_reg_t* reg = test_registers[i];
+        
         // Write test value to register
-        ESP_LOGI(TAG, "Writing 0x%06" PRIx32 " to %s (0x%04X)", test_value, reg_names[i], test_registers[i]);
-        ret = ade7880_write_register(spi_handle, test_registers[i], test_value);
+        ESP_LOGI(TAG, "Writing 0x%06" PRIx32 " to %s (0x%04X)", test_value, reg->name, reg->address);
+        ret = ade7880_write_register(spi_handle, reg, test_value);
         if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to write to %s register", reg_names[i]);
+            ESP_LOGE(TAG, "Failed to write to %s register", reg->name);
             return ret;
         }
         
         // Read back the value
-        ret = ade7880_read_register(spi_handle, test_registers[i], &read_value);
+        ret = ade7880_read_register(spi_handle, reg, &read_value);
         if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to read from %s register", reg_names[i]);
+            ESP_LOGE(TAG, "Failed to read from %s register", reg->name);
             return ret;
         }
         
         // Verify the value (note: only the lower 24 bits are valid)
-        ESP_LOGI(TAG, "Read 0x%06" PRIx32 " from %s (0x%04X)", read_value & 0xFFFFFF, reg_names[i], test_registers[i]);
-        if ((read_value & 0xFFFFFF) != test_value) {
+        ESP_LOGI(TAG, "Read 0x%06" PRIx32 " from %s (0x%04X)", read_value, reg->name, reg->address);
+        if ((read_value) != test_value) {
             ESP_LOGW(TAG, "Value mismatch for %s: wrote 0x%06" PRIx32 ", read 0x%06" PRIx32 "", 
-                    reg_names[i], test_value, read_value & 0xFFFFFF);
+                    reg->name, test_value, read_value);
         }
 
-        // Reset to zero for this registers
-        ret = ade7880_write_register(spi_handle, test_registers[i], 0x000000);
+        // Reset to zero for this register
+        ret = ade7880_write_register(spi_handle, reg, 0x000000);
         if (ret != ESP_OK) {
-            ESP_LOGE(TAG, "Failed to reset %s register", reg_names[i]);
+            ESP_LOGE(TAG, "Failed to reset %s register", reg->name);
             return ret;
         }
         
         // Use different test value for next register
-        test_value = (test_value + 0x111111) & 0xFFFFFF;  // Increment but keep to 24 bits
+        test_value = (test_value + 0x111111);  // Increment but keep to 24 bits
     }
     
     return ESP_OK;
 }
 
+// Updated start DSP function
 static esp_err_t ade7880_start_dsp(spi_device_handle_t spi_handle)
 {
     ESP_LOGI(TAG, "Starting ADE7880 DSP");
     // Write 1 to RUN register to start DSP
-    return ade7880_write_register(spi_handle, ADE7880_RUN_REG, 0x0001);
+    return ade7880_write_register(spi_handle, &ADE7880_RUN_REG, 1);
 }
 
 void app_main(void)
@@ -618,130 +772,3 @@ void app_main(void)
     // Restart the application
     esp_restart();
 }
-
-// DIGITAL SIGNAL PROCESSOR 
-// The ADE7880 contains a fixed function digital signal processor 
-// (DSP) that computes all powers and rms values. It contains 
-// program memory ROM and data memory RAM.  
-// The program used for the power and rms computations is stored 
-// in the program memory ROM and the processor executes it every 
-// 8 kHz. The end of the computations is signaled by setting Bit 17 
-// (DREADY) to 1 in the STATUS0 register. An interrupt attached 
-// to this flag can be enabled by setting Bit 17 (DREADY) in the 
-// MASK0 register. If enabled, the IRQ0 pin is set low and Status 
-// Bit DREADY is set to 1 at the end of the computations. The status 
-// bit is cleared and the IRQ0 pin is set to high by writing to the 
-// STATUS0 register with Bit 17 (DREADY) set to 1. 
-// The registers used by the DSP are located in the data memory 
-// RAM, at addresses between 0x4380 and 0x43BE. The width of 
-// this memory is 28 bits. A two-stage pipeline is used when write 
-// operations to the data memory RAM are executed. This means 
-// two things: when only one register needs to be initialized, write 
-// it two more times to ensure the value has been written into RAM. 
-// When two or more registers need to be initialized, write the last 
-// register in the queue two more times to ensure the value is 
-// written into RAM. 
-// As explained in the Power-Up Procedure section, at power-up 
-// or after a hardware or software reset, the DSP is in idle mode. 
-// No instruction is executed. All the registers located in the data 
-// memory RAM are initialized at 0, their default values and they 
-// can be read/written without any restriction. The Run register, 
-// used to start and stop the DSP, is cleared to 0x0000. The Run 
-// register needs to be written with 0x0001 for the DSP to start 
-// code execution. It is recommended to first initialize all ADE7880 
-// registers located in the data memory RAM with their desired 
-// values. Next, write the last register in the queue two additional 
-// times to flush the pipeline and then write the Run register with 
-// ADE7880 
-// 0x0001. In this way, the DSP starts the computations from a 
-// desired configuration.  
-// To protect the integrity of the data stored in the data memory RAM 
-// of the DSP (between Address 0x4380 and Address 0x43BE), a write 
-// protection mechanism is available. By default, the protection is 
-// disabled and registers placed between 0x4380 and 0x43BE can 
-// be written without restriction. When the protection is enabled, 
-// no writes to these registers are allowed. Registers can be always 
-// read, without restriction, independent of the write protection 
-// state. To enable the protection, write 0xAD to an internal 8-bit 
-// register located at Address 0xE7FE, followed by a write of 0x80 
-// to an internal 8-bit register located at Address 0xE7E3. To disable 
-// the protection, write 0xAD to an internal 8-bit register located 
-// at Address 0xE7FE, followed by a write of 0x00 to an internal 8-bit 
-// register located at Address 0xE7E3. It is recommended to enable 
-// the write protection before starting the DSP. If any data memory 
-// RAM based register needs to be changed, simply disable the 
-// protection, change the value and then enable back the protection. 
-// There is no need to stop the DSP in order to change these registers. 
-// To disable the protection, write 0xAD to an internal 8-bit register 
-// located at Address 0xE7FE, followed by a write of 0x00 to an 
-// internal 8-bit register located at Address 0xE7E3.  
-// Use the following procedure to initialize the ADE7880 registers 
-// at power-up: 
-// 1. 
-// 2. 
-// 3. 
-// 4. 
-// 5. 
-// 6. 
-// Select the PGA gains in the phase currents, voltages, and 
-// neutral current channels: Bits [2:0] (PGA1), Bits [5:3] 
-// (PGA2) and Bits [8:6] (PGA3) in the Gain register. 
-// If Rogowski coils are used, enable the digital integrators in 
-// the phase and neutral currents: Bit 0 (INTEN) set to 1 in 
-// CONFIG register. Initialize DICOEFF register to 0xFF8000 
-// before setting the INTEN bit in the CONFIG register. 
-// If fn is between 55 Hz and 66 Hz, set Bit 14 (SELFREQ) in 
-// COMPMODE register. 
-// Initialize all the other data memory RAM registers. Write 
-// the last register in the queue three times to ensure that its 
-// value is written into the RAM. 
-// Initialize WTHR, VARTHR, VATHR, VLEVEL and 
-// VNOM registers based on Equation 26, Equation 37, 
-// Equation 44, Equation 22, and Equation 42, respectively. 
-// Initialize CF1DEN, CF2DEN, and CF3DEN based on 
-// Equation 49.  
-// Data Sheet 
-// 7. 
-// 8. 
-// 9. 
-// Enable the data memory RAM protection by writing 0xAD 
-// to an internal 8-bit register located at Address 0xE7FE 
-// followed by a write of 0x80 to an internal 8-bit register 
-// located at Address 0xE7E3. 
-// Read back all data memory RAM registers to ensure that 
-// they initialized with the desired values. In the unlikely case 
-// that one or more registers does not initialize correctly, disable 
-// the protection by writing 0xAD to an internal 8-bit register 
-// located at Address 0xE7FE, followed by a write of 0x00 to an 
-// internal 8-bit register located at Address 0xE7E3. Reinitialize 
-// the registers, and write the last register in the queue three 
-// times. Enable the write protection by writing 0xAD to an 
-// internal 8-bit register located at Address 0xE7FE, followed 
-// by a write of 0x80 to an internal 8-bit register located at 
-// Address 0xE7E3. 
-// Start the DSP by setting Run = 1. 
-// 10. Read the energy registers xWATTHR, xVAHR, xFWATTHR, 
-// and xFVARHR to erase their content and start energy 
-// accumulation from a known state. 
-// 11. Enable the CF1, CF2 and CF3 frequency converter outputs 
-// by clearing bits 9, 10 and 11 (CF1DIS, CF2DIS, and 
-// CF3DIS) to 0 in CFMODE register.  
-// There is no obvious reason to stop the DSP if the ADE7880 is 
-// maintained in PSM0 normal mode. All ADE7880 registers, 
-// including ones located in the data memory RAM, can be 
-// modified without stopping the DSP. However, to stop the DSP, 
-// write 0x0000 into the Run register. To restart the DSP, follow 
-// one of the following procedures:  
-// • If the ADE7880 registers located in the data memory RAM 
-// have not been modified, write 0x0001 into the Run register to 
-// start the DSP.  
-// • If the ADE7880 registers located in the data memory RAM 
-// have to be modified, first execute a software or a hardware 
-// reset, initialize all ADE7880 registers at desired values, enable 
-// the write protection and then write 0x0001 into the Run 
-// register to start the DSP.  
-// As mentioned in the Power Management section, when the 
-// ADE7880 switch out of PSM0 power mode, it is recommended to 
-// stop the DSP by writing 0x0000 into the Run register (see Table 10 
-// and Table 11 for the recommended actions when changing 
-// power modes). 
