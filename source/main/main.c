@@ -22,6 +22,16 @@
 
 static const char *TAG = "main";
 
+// Define W5500 SPI pins
+#define W5500_SPI_HOST     SPI3_HOST
+#define W5500_SPI_MISO     19
+#define W5500_SPI_MOSI     23
+#define W5500_SPI_SCLK     18
+#define W5500_SPI_CS       5
+#define W5500_INT_PIN      4
+#define W5500_RST_PIN      15
+#define W5500_SPI_CLOCK_SPEED_HZ 40000000 // 40 MHz
+
 // LED configuration
 #define LEDC_TIMER          LEDC_TIMER_0
 #define LEDC_MODE           LEDC_LOW_SPEED_MODE
