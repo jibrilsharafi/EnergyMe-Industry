@@ -1,36 +1,25 @@
-/*
- * SPDX-FileCopyrightText: 2010-2022 Espressif Systems (Shanghai) CO LTD
- *
- * SPDX-License-Identifier: CC0-1.0
- */
-
 #include <stdio.h>
 #include <inttypes.h>
+#include <string.h>
 #include "sdkconfig.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include "esp_system.h"
 #include "esp_chip_info.h"
 #include "esp_flash.h"
-#include "esp_system.h"
-#include "driver/ledc.h"
-#include "esp_err.h"
 #include "esp_log.h"
-#include "driver/spi_master.h"
+#include "esp_err.h"
+#include "esp_event.h"
+#include "esp_netif.h"
+#include "esp_eth.h"
+#include "ethernet.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 #include "driver/gpio.h"
+#include "driver/ledc.h"
+#include "driver/spi_master.h"
 
 #include "ade7880_registers.h"
 
 static const char *TAG = "main";
-
-// Define W5500 SPI pins
-#define W5500_SPI_HOST     SPI3_HOST
-#define W5500_SPI_MISO     19
-#define W5500_SPI_MOSI     23
-#define W5500_SPI_SCLK     18
-#define W5500_SPI_CS       5
-#define W5500_INT_PIN      4
-#define W5500_RST_PIN      15
-#define W5500_SPI_CLOCK_SPEED_HZ 40000000 // 40 MHz
 
 // LED configuration
 #define LEDC_TIMER          LEDC_TIMER_0
@@ -588,6 +577,8 @@ void app_main(void)
     
     // Show initialization status
     set_led_status(LED_STATUS_INIT);
+    
+    init_ethernet();  
 
     // Initialize SPI for ADE7880
     spi_device_handle_t spi_handle;
