@@ -1,5 +1,5 @@
 idf_component_register(
-    SRCS "log_handler.c"
+    SRCS "network_events.c"
     INCLUDE_DIRS "include"
-    REQUIRES lwip events
+    REQUIRES esp_event
 )

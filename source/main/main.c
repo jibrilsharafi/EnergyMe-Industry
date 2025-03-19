@@ -58,14 +58,15 @@ void app_main(void)
         return;
     }
 
-    // Wait 10 seconds for Ethernet to stabilize
-    vTaskDelay(10000 / portTICK_PERIOD_MS);
-
-    // Initialize log handler for UDP redirection
+    // Initialize log handler to register for network events
+    // Note: It will activate logging automatically when network is connected
     ret = log_handler_init();
     if (ret != ESP_OK) {
         ESP_LOGW(TAG, "Log handler initialization failed, continuing without UDP logging");
     }
+    
+    // No need to wait for 10 seconds here anymore, as log_handler will initialize
+    // automatically when network is up
     
     // Testing some warning and error messages
     ESP_LOGW(TAG, "This is a warning message");
@@ -125,7 +126,7 @@ void app_main(void)
         led_control_set_rgb(0, 255, 0);  // Full green
         vTaskDelay(100 / portTICK_PERIOD_MS);
         led_control_set_rgb(0, 100, 0);  // Dim green
-        
+
         // Delay before next reading
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }

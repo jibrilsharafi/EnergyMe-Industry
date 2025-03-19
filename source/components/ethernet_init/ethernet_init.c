@@ -8,12 +8,15 @@
 #include "esp_mac.h"
 #include "esp_netif.h"
 #include "esp_eth.h"
-#include "esp_event.h"
 #include "driver/gpio.h"
 #include "sdkconfig.h"
 #if CONFIG_USE_SPI_ETHERNET
 #include "driver/spi_master.h"
 #endif // CONFIG_USE_SPI_ETHERNET
+
+// Events
+#include "network_events.h"
+
 #if CONFIG_SPI_ETHERNETS_NUM
 #define SPI_ETHERNETS_NUM           CONFIG_SPI_ETHERNETS_NUM
 #else
@@ -45,6 +48,10 @@ typedef struct {
 }spi_eth_module_config_t;
 
 static const char *TAG = "ethernet_init";
+
+// Define the event base
+ESP_EVENT_DEFINE_BASE(NETWORK_EVENT);
+
 #if CONFIG_USE_SPI_ETHERNET
 static bool gpio_isr_svc_init_by_eth = false; // indicates that we initialized the GPIO ISR service
 #endif // CONFIG_USE_SPI_ETHERNET
@@ -354,9 +361,13 @@ static void eth_event_handler(void *arg, esp_event_base_t event_base,
         ESP_LOGI(TAG, "Ethernet Link Up");
         ESP_LOGI(TAG, "Ethernet HW Addr %02x:%02x:%02x:%02x:%02x:%02x",
                  mac_addr[0], mac_addr[1], mac_addr[2], mac_addr[3], mac_addr[4], mac_addr[5]);
+        // Post custom event for connection
+        esp_event_post(NETWORK_EVENT, NETWORK_EVENT_CONNECTED, NULL, 0, portMAX_DELAY);
         break;
     case ETHERNET_EVENT_DISCONNECTED:
         ESP_LOGI(TAG, "Ethernet Link Down");
+        // Post custom event for disconnection
+        esp_event_post(NETWORK_EVENT, NETWORK_EVENT_DISCONNECTED, NULL, 0, portMAX_DELAY);
         break;
     case ETHERNET_EVENT_START:
         ESP_LOGI(TAG, "Ethernet Started");
@@ -383,6 +394,9 @@ static void got_ip_event_handler(void *arg, esp_event_base_t event_base,
     ESP_LOGI(TAG, "ETHMASK:" IPSTR, IP2STR(&ip_info->netmask));
     ESP_LOGI(TAG, "ETHGW:" IPSTR, IP2STR(&ip_info->gw));
     ESP_LOGI(TAG, "~~~~~~~~~~~");
+    
+    // Post custom event for got IP
+    esp_event_post(NETWORK_EVENT, NETWORK_EVENT_GOT_IP, ip_info, sizeof(esp_netif_ip_info_t), portMAX_DELAY);
 }
 
 esp_err_t eth_spi_init(void)
