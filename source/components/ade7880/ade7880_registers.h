@@ -5,9 +5,7 @@
  * This file contains all register addresses and definitions for the ADE7880
  * polyphase multifunction energy metering IC.
  */
-
-#ifndef ADE7880_REGISTERS_H
-#define ADE7880_REGISTERS_H
+#pragma once
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -24,7 +22,7 @@ typedef struct {
 /* Register Definitions */
 
 // DSP Control register
-const ade7880_reg_t ADE7880_RUN_REG = {
+static const ade7880_reg_t ADE7880_RUN_REG = {
     .address = 0xE228,
     .comm_length = 16,
     .writable = true,
@@ -33,7 +31,7 @@ const ade7880_reg_t ADE7880_RUN_REG = {
 };
 
 // Version register
-const ade7880_reg_t ADE7880_VERSION_REG = {
+static const ade7880_reg_t ADE7880_VERSION_REG = {
     .address = 0xE707,
     .comm_length = 8,
     .writable = false,
@@ -42,7 +40,7 @@ const ade7880_reg_t ADE7880_VERSION_REG = {
 };
 
 // DSP RAM Gain registers (need byte shifting)
-const ade7880_reg_t ADE7880_AIGAIN = {
+static const ade7880_reg_t ADE7880_AIGAIN = {
     .address = 0x4380,
     .comm_length = 32,
     .writable = true,
@@ -50,7 +48,7 @@ const ade7880_reg_t ADE7880_AIGAIN = {
     .name = "AIGAIN"
 };
 
-const ade7880_reg_t ADE7880_AVGAIN = {
+static const ade7880_reg_t ADE7880_AVGAIN = {
     .address = 0x4381,
     .comm_length = 32,
     .writable = true,
@@ -58,7 +56,7 @@ const ade7880_reg_t ADE7880_AVGAIN = {
     .name = "AVGAIN"
 };
 
-const ade7880_reg_t ADE7880_BIGAIN = {
+static const ade7880_reg_t ADE7880_BIGAIN = {
     .address = 0x4382,
     .comm_length = 32,
     .writable = true,
@@ -66,7 +64,7 @@ const ade7880_reg_t ADE7880_BIGAIN = {
     .name = "BIGAIN"
 };
 
-const ade7880_reg_t ADE7880_BVGAIN = {
+static const ade7880_reg_t ADE7880_BVGAIN = {
     .address = 0x4383,
     .comm_length = 32,
     .writable = true,
@@ -74,7 +72,7 @@ const ade7880_reg_t ADE7880_BVGAIN = {
     .name = "BVGAIN"
 };
 
-const ade7880_reg_t ADE7880_CIGAIN = {
+static const ade7880_reg_t ADE7880_CIGAIN = {
     .address = 0x4384,
     .comm_length = 32,
     .writable = true,
@@ -82,7 +80,7 @@ const ade7880_reg_t ADE7880_CIGAIN = {
     .name = "CIGAIN"
 };
 
-const ade7880_reg_t ADE7880_CVGAIN = {
+static const ade7880_reg_t ADE7880_CVGAIN = {
     .address = 0x4385,
     .comm_length = 32,
     .writable = true,
@@ -91,7 +89,7 @@ const ade7880_reg_t ADE7880_CVGAIN = {
 };
 
 // RMS registers (read-only)
-const ade7880_reg_t ADE7880_AIRMS = {
+static const ade7880_reg_t ADE7880_AIRMS = {
     .address = 0x43C0,
     .comm_length = 32,
     .writable = false,
@@ -99,7 +97,7 @@ const ade7880_reg_t ADE7880_AIRMS = {
     .name = "AIRMS"
 };
 
-const ade7880_reg_t ADE7880_AVRMS = {
+static const ade7880_reg_t ADE7880_AVRMS = {
     .address = 0x43C1,
     .comm_length = 32,
     .writable = false,
@@ -107,7 +105,7 @@ const ade7880_reg_t ADE7880_AVRMS = {
     .name = "AVRMS"
 };
 
-const ade7880_reg_t ADE7880_BIRMS = {
+static const ade7880_reg_t ADE7880_BIRMS = {
     .address = 0x43C2,
     .comm_length = 32,
     .writable = false,
@@ -115,7 +113,7 @@ const ade7880_reg_t ADE7880_BIRMS = {
     .name = "BIRMS"
 };
 
-const ade7880_reg_t ADE7880_BVRMS = {
+static const ade7880_reg_t ADE7880_BVRMS = {
     .address = 0x43C3,
     .comm_length = 32,
     .writable = false,
@@ -123,7 +121,7 @@ const ade7880_reg_t ADE7880_BVRMS = {
     .name = "BVRMS"
 };
 
-const ade7880_reg_t ADE7880_CIRMS = {
+static const ade7880_reg_t ADE7880_CIRMS = {
     .address = 0x43C4,
     .comm_length = 32,
     .writable = false,
@@ -131,7 +129,7 @@ const ade7880_reg_t ADE7880_CIRMS = {
     .name = "CIRMS"
 };
 
-const ade7880_reg_t ADE7880_CVRMS = {
+static const ade7880_reg_t ADE7880_CVRMS = {
     .address = 0x43C5,
     .comm_length = 32,
     .writable = false,
@@ -140,7 +138,7 @@ const ade7880_reg_t ADE7880_CVRMS = {
 };
 
 // Configuration and Control Registers
-const ade7880_reg_t ADE7880_LINECYC = {
+static const ade7880_reg_t ADE7880_LINECYC = {
     .address = 0xE60C,
     .comm_length = 16,
     .writable = true,
@@ -148,7 +146,7 @@ const ade7880_reg_t ADE7880_LINECYC = {
     .name = "LINECYC"
 };
 
-const ade7880_reg_t ADE7880_ZXTOUT = {
+static const ade7880_reg_t ADE7880_ZXTOUT = {
     .address = 0xE60D,
     .comm_length = 16,
     .writable = true,
@@ -156,7 +154,7 @@ const ade7880_reg_t ADE7880_ZXTOUT = {
     .name = "ZXTOUT"
 };
 
-const ade7880_reg_t ADE7880_COMPMODE = {
+static const ade7880_reg_t ADE7880_COMPMODE = {
     .address = 0xE60E,
     .comm_length = 16,
     .writable = true,
@@ -164,7 +162,7 @@ const ade7880_reg_t ADE7880_COMPMODE = {
     .name = "COMPMODE"
 };
 
-const ade7880_reg_t ADE7880_GAIN = {
+static const ade7880_reg_t ADE7880_GAIN = {
     .address = 0xE60F,
     .comm_length = 16,
     .writable = true,
@@ -172,7 +170,7 @@ const ade7880_reg_t ADE7880_GAIN = {
     .name = "GAIN"
 };
 
-const ade7880_reg_t ADE7880_CFMODE = {
+static const ade7880_reg_t ADE7880_CFMODE = {
     .address = 0xE610,
     .comm_length = 16,
     .writable = true,
@@ -180,7 +178,7 @@ const ade7880_reg_t ADE7880_CFMODE = {
     .name = "CFMODE"
 };
 
-const ade7880_reg_t ADE7880_CF1DEN = {
+static const ade7880_reg_t ADE7880_CF1DEN = {
     .address = 0xE611,
     .comm_length = 16,
     .writable = true,
@@ -188,7 +186,7 @@ const ade7880_reg_t ADE7880_CF1DEN = {
     .name = "CF1DEN"
 };
 
-const ade7880_reg_t ADE7880_CF2DEN = {
+static const ade7880_reg_t ADE7880_CF2DEN = {
     .address = 0xE612,
     .comm_length = 16,
     .writable = true,
@@ -196,7 +194,7 @@ const ade7880_reg_t ADE7880_CF2DEN = {
     .name = "CF2DEN"
 };
 
-const ade7880_reg_t ADE7880_CF3DEN = {
+static const ade7880_reg_t ADE7880_CF3DEN = {
     .address = 0xE613,
     .comm_length = 16,
     .writable = true,
@@ -204,7 +202,7 @@ const ade7880_reg_t ADE7880_CF3DEN = {
     .name = "CF3DEN"
 };
 
-const ade7880_reg_t ADE7880_APHCAL = {
+static const ade7880_reg_t ADE7880_APHCAL = {
     .address = 0xE614,
     .comm_length = 16,
     .writable = true,
@@ -212,7 +210,7 @@ const ade7880_reg_t ADE7880_APHCAL = {
     .name = "APHCAL"
 };
 
-const ade7880_reg_t ADE7880_BPHCAL = {
+static const ade7880_reg_t ADE7880_BPHCAL = {
     .address = 0xE615,
     .comm_length = 16,
     .writable = true,
@@ -220,7 +218,7 @@ const ade7880_reg_t ADE7880_BPHCAL = {
     .name = "BPHCAL"
 };
 
-const ade7880_reg_t ADE7880_CPHCAL = {
+static const ade7880_reg_t ADE7880_CPHCAL = {
     .address = 0xE616,
     .comm_length = 16,
     .writable = true,
@@ -228,7 +226,7 @@ const ade7880_reg_t ADE7880_CPHCAL = {
     .name = "CPHCAL"
 };
 
-const ade7880_reg_t ADE7880_PHSIGN = {
+static const ade7880_reg_t ADE7880_PHSIGN = {
     .address = 0xE617,
     .comm_length = 16,
     .writable = false,
@@ -236,7 +234,7 @@ const ade7880_reg_t ADE7880_PHSIGN = {
     .name = "PHSIGN"
 };
 
-const ade7880_reg_t ADE7880_CONFIG = {
+static const ade7880_reg_t ADE7880_CONFIG = {
     .address = 0xE618,
     .comm_length = 16,
     .writable = true,
@@ -244,7 +242,7 @@ const ade7880_reg_t ADE7880_CONFIG = {
     .name = "CONFIG"
 };
 
-const ade7880_reg_t ADE7880_MMODE = {
+static const ade7880_reg_t ADE7880_MMODE = {
     .address = 0xE700,
     .comm_length = 8,
     .writable = true,
@@ -252,7 +250,7 @@ const ade7880_reg_t ADE7880_MMODE = {
     .name = "MMODE"
 };
 
-const ade7880_reg_t ADE7880_ACCMODE = {
+static const ade7880_reg_t ADE7880_ACCMODE = {
     .address = 0xE701,
     .comm_length = 8,
     .writable = true,
@@ -260,7 +258,7 @@ const ade7880_reg_t ADE7880_ACCMODE = {
     .name = "ACCMODE"
 };
 
-const ade7880_reg_t ADE7880_LCYCMODE = {
+static const ade7880_reg_t ADE7880_LCYCMODE = {
     .address = 0xE702,
     .comm_length = 8,
     .writable = true,
@@ -268,7 +266,7 @@ const ade7880_reg_t ADE7880_LCYCMODE = {
     .name = "LCYCMODE"
 };
 
-const ade7880_reg_t ADE7880_PEAKCYC = {
+static const ade7880_reg_t ADE7880_PEAKCYC = {
     .address = 0xE703,
     .comm_length = 8,
     .writable = true,
@@ -276,7 +274,7 @@ const ade7880_reg_t ADE7880_PEAKCYC = {
     .name = "PEAKCYC"
 };
 
-const ade7880_reg_t ADE7880_SAGCYC = {
+static const ade7880_reg_t ADE7880_SAGCYC = {
     .address = 0xE704,
     .comm_length = 8,
     .writable = true,
@@ -284,7 +282,7 @@ const ade7880_reg_t ADE7880_SAGCYC = {
     .name = "SAGCYC"
 };
 
-const ade7880_reg_t ADE7880_CFCYC = {
+static const ade7880_reg_t ADE7880_CFCYC = {
     .address = 0xE705,
     .comm_length = 8,
     .writable = true,
@@ -292,12 +290,10 @@ const ade7880_reg_t ADE7880_CFCYC = {
     .name = "CFCYC"
 };
 
-const ade7880_reg_t ADE7880_HSDC_CFG = {
+static const ade7880_reg_t ADE7880_HSDC_CFG = {
     .address = 0xE706,
     .comm_length = 8,
     .writable = true,
     .default_value = 0x00,
     .name = "HSDC_CFG"
 };
-
-#endif /* ADE7880_REGISTERS_H */

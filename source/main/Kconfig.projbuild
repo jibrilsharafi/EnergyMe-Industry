@@ -1,0 +1,46 @@
+menu "EnergyMe Application Configuration"
+
+    config ENABLE_HTTP_SERVER
+        bool "Enable HTTP Server"
+        default y
+        help
+            Enable HTTP server for web interface.
+
+    config WIFI_SSID
+        string "WiFi SSID"
+        default "EnergyMe"
+        help
+            SSID (network name) for the example to connect to.
+
+    config WIFI_PASSWORD
+        string "WiFi Password"
+        default "energy123"
+        help
+            WiFi password (WPA or WPA2) for the example to use.
+            Can be left blank if the network has no security set.
+
+    config MUX_INITIAL_SCAN_ENABLED
+        int "Enable initial multiplexer channel scan"
+        default 1
+        range 0 1
+        help
+            If enabled (1), the system will scan through all multiplexer channels
+            during startup before settling on the final channel.
+
+    config MUX_INITIAL_SCAN_INTERVAL_MS
+        int "Time between channel changes during initial scan (ms)"
+        default 1000
+        range 100 10000
+        depends on MUX_INITIAL_SCAN_ENABLED = 1
+        help
+            Time in milliseconds between channel changes during initial scan.
+
+    config MUX_FINAL_CHANNEL
+        int "Final multiplexer channel after scan"
+        default 0
+        range 0 15
+        help
+            Channel (0-15) that the multiplexer will stay on after initial scan
+            or immediately if scan is disabled.
+
+endmenu

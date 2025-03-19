@@ -22,7 +22,7 @@ extern "C" {
  *          - ESP_ERR_NO_MEM when there is no memory to allocate for Ethernet driver handles array
  *          - ESP_FAIL on any other failure
  */
-esp_err_t example_eth_init(esp_eth_handle_t *eth_handles_out[], uint8_t *eth_cnt_out);
+esp_err_t eth_init(esp_eth_handle_t *eth_handles_out[], uint8_t *eth_cnt_out);
 
 /**
  * @brief De-initialize array of Ethernet drivers
@@ -34,7 +34,18 @@ esp_err_t example_eth_init(esp_eth_handle_t *eth_handles_out[], uint8_t *eth_cnt
  *          - ESP_OK on success
  *          - ESP_ERR_INVALID_ARG when passed invalid pointers
  */
-esp_err_t example_eth_deinit(esp_eth_handle_t *eth_handles, uint8_t eth_cnt);
+esp_err_t eth_deinit(esp_eth_handle_t *eth_handles, uint8_t eth_cnt);
+
+/**
+ * @brief Initialize Ethernet driver for SPI Ethernet modules
+ * 
+ * @return
+ *          - ESP_OK on success
+ *          - ESP_ERR_INVALID_ARG when passed invalid pointers
+ *          - ESP_ERR_NO_MEM when there is no memory to allocate for Ethernet driver
+ *          - ESP_FAIL on any other failure
+ */
+esp_err_t eth_spi_init(void);
 
 #ifdef __cplusplus
 }

@@ -1,0 +1,52 @@
+menu "ADE7880 Energy Measurement Configuration"
+
+    config ENERGY_ADE7880_RESET_PIN
+        int "ADE7880 Reset GPIO Pin"
+        default 3
+        range 0 ENV_GPIO_OUT_RANGE_MAX
+        help
+            GPIO pin connected to ADE7880 RESET pin.
+            
+    config ENERGY_ADE7880_CS_PIN
+        int "ADE7880 CS GPIO Pin"
+        default 9
+        range 0 ENV_GPIO_OUT_RANGE_MAX
+        help
+            GPIO pin connected to ADE7880 CS pin.
+            
+    config ENERGY_ADE7880_MOSI_PIN
+        int "ADE7880 MOSI GPIO Pin"
+        default 10
+        range 0 ENV_GPIO_OUT_RANGE_MAX
+        help
+            GPIO pin connected to ADE7880 MOSI pin.
+            
+    config ENERGY_ADE7880_MISO_PIN
+        int "ADE7880 MISO GPIO Pin"
+        default 11
+        range 0 ENV_GPIO_OUT_RANGE_MAX
+        help
+            GPIO pin connected to ADE7880 MISO pin.
+            
+    config ENERGY_ADE7880_SCLK_PIN
+        int "ADE7880 SCLK GPIO Pin"
+        default 12
+        range 0 ENV_GPIO_OUT_RANGE_MAX
+        help
+            GPIO pin connected to ADE7880 SCLK pin.
+            
+    config ENERGY_ADE7880_SPI_HOST
+        int "SPI Host (SPI2_HOST=1, SPI3_HOST=2)"
+        default 2
+        range 1 2
+        help
+            SPI host to use for ADE7880 communication.
+            
+    config ENERGY_ADE7880_SPI_CLOCK_SPEED_HZ
+        int "SPI Clock Speed (Hz)"
+        default 2500000
+        range 100000 2500000
+        help
+            SPI clock speed for ADE7880 communication.
+            
+endmenu

@@ -1,0 +1,52 @@
+menu "RGB LED Configuration"
+
+    config RGB_LED_RED_GPIO
+        int "RGB LED Red Channel GPIO Number"
+        range 0 ENV_GPIO_OUT_RANGE_MAX
+        default 8
+        help
+            GPIO number for RGB LED red channel.
+
+    config RGB_LED_GREEN_GPIO
+        int "RGB LED Green Channel GPIO Number"
+        range 0 ENV_GPIO_OUT_RANGE_MAX
+        default 19
+        help
+            GPIO number for RGB LED green channel.
+
+    config RGB_LED_BLUE_GPIO
+        int "RGB LED Blue Channel GPIO Number"
+        range 0 ENV_GPIO_OUT_RANGE_MAX
+        default 20
+        help
+            GPIO number for RGB LED blue channel.
+            
+    config RGB_LED_TIMER
+        int "RGB LED LEDC Timer"
+        range 0 3
+        default 0
+        help
+            LEDC Timer to use for RGB LED control.
+
+    config RGB_LED_MODE
+        int "RGB LED LEDC Mode"
+        range 0 1
+        default 0
+        help
+            LEDC Mode (0 for low speed, 1 for high speed).
+
+    config RGB_LED_DUTY_RES
+        int "RGB LED Duty Resolution"
+        range 1 20
+        default 13
+        help
+            Set duty resolution for RGB LED control (1-20 bits).
+
+    config RGB_LED_FREQUENCY
+        int "RGB LED Frequency (Hz)"
+        range 1 40000
+        default 5000
+        help
+            Frequency in Hz for RGB LED control.
+
+endmenu
