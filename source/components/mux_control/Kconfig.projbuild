@@ -3,28 +3,28 @@ menu "Multiplexer Control Configuration"
     config MUX_S0_GPIO
         int "Multiplexer S0 GPIO Number"
         range 0 ENV_GPIO_OUT_RANGE_MAX
-        default 35
+        default 38
         help
             GPIO number for multiplexer address line S0.
 
     config MUX_S1_GPIO
         int "Multiplexer S1 GPIO Number"
         range 0 ENV_GPIO_OUT_RANGE_MAX
-        default 36
+        default 37
         help
             GPIO number for multiplexer address line S1.
 
     config MUX_S2_GPIO
         int "Multiplexer S2 GPIO Number"
         range 0 ENV_GPIO_OUT_RANGE_MAX
-        default 37
+        default 36
         help
             GPIO number for multiplexer address line S2.
 
     config MUX_S3_GPIO
         int "Multiplexer S3 GPIO Number"
         range 0 ENV_GPIO_OUT_RANGE_MAX
-        default 38
+        default 35
         help
             GPIO number for multiplexer address line S3.
 

@@ -16,17 +16,21 @@
 #include "ethernet_init.h"
 #include "mux_control.h"
 #include "led_control.h"
+#include "log_handler.h"
 
 static const char *TAG = "main";
 
 // MUX scan configuration
-#define MUX_INITIAL_SCAN_ENABLED     1       // 1 to enable initial scan, 0 to disable
-#define MUX_INITIAL_SCAN_INTERVAL_MS 1000    // Time between channels during scan (ms)
-#define MUX_FINAL_CHANNEL            0       // Channel to stay on after scan completes
+#define MUX_INITIAL_SCAN_ENABLED     CONFIG_MUX_INITIAL_SCAN_ENABLED
+#define MUX_INITIAL_SCAN_INTERVAL_MS CONFIG_MUX_INITIAL_SCAN_INTERVAL_MS
+#define MUX_FINAL_CHANNEL            CONFIG_MUX_FINAL_CHANNEL
 
 void app_main(void)
 {
-    ESP_LOGI(TAG, "EnergyMe Industry Power Monitor");
+    // Log level
+    esp_log_level_set("*", ESP_LOG_INFO);
+
+    ESP_LOGI(TAG, "EnergyMe - Industry");
     
     // Initialize LED control
     esp_err_t ret = led_control_init();
@@ -35,8 +39,8 @@ void app_main(void)
         return;
     }
     
-    // Show initializing state with blue light
-    led_control_set_color(RGB_COLOR_BLUE);
+    // Show initializing state with green light
+    led_control_set_color(RGB_COLOR_GREEN);
     
     // Initialize multiplexer control
     ret = mux_control_init();
@@ -46,19 +50,32 @@ void app_main(void)
         return;
     }
     
+    // Initialize Ethernet
+    ret = eth_spi_init();
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Ethernet initialization failed");
+        led_control_set_color(RGB_COLOR_RED);  // Show error
+        return;
+    }
+
+    // Wait 10 seconds for Ethernet to stabilize
+    vTaskDelay(10000 / portTICK_PERIOD_MS);
+
+    // Initialize log handler for UDP redirection
+    ret = log_handler_init();
+    if (ret != ESP_OK) {
+        ESP_LOGW(TAG, "Log handler initialization failed, continuing without UDP logging");
+    }
+    
+    // Testing some warning and error messages
+    ESP_LOGW(TAG, "This is a warning message");
+    ESP_LOGE(TAG, "This is an error message");
+
     // Initialize ADE7880 power meter
     spi_device_handle_t ade7880_spi_handle;
     ret = ade7880_init(&ade7880_spi_handle);
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "ADE7880 initialization failed");
-        led_control_set_color(RGB_COLOR_RED);  // Show error
-        return;
-    }
-    
-    // Initialize Ethernet
-    ret = eth_spi_init();
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Ethernet initialization failed");
         led_control_set_color(RGB_COLOR_RED);  // Show error
         return;
     }
@@ -110,6 +127,6 @@ void app_main(void)
         led_control_set_rgb(0, 100, 0);  // Dim green
         
         // Delay before next reading
-        vTaskDelay(900 / portTICK_PERIOD_MS);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }

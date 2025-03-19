@@ -4,3 +4,4 @@ build
 .mypy_cache
 *.old
 sdkconfig
+**/*.log

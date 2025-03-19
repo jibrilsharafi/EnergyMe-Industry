@@ -14,7 +14,6 @@
 #if CONFIG_USE_SPI_ETHERNET
 #include "driver/spi_master.h"
 #endif // CONFIG_USE_SPI_ETHERNET
-
 #if CONFIG_SPI_ETHERNETS_NUM
 #define SPI_ETHERNETS_NUM           CONFIG_SPI_ETHERNETS_NUM
 #else
@@ -366,6 +365,7 @@ static void eth_event_handler(void *arg, esp_event_base_t event_base,
         ESP_LOGI(TAG, "Ethernet Stopped");
         break;
     default:
+        ESP_LOGW(TAG, "Unhandled event id");
         break;
     }
 }

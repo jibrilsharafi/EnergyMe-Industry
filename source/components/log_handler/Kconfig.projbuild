@@ -1,0 +1,40 @@
+menu "Log Handler Configuration"
+
+    config LOG_UDP_OUTPUT_ENABLE
+        bool "Enable UDP log output"
+        default y
+        help
+            Enable sending logs to a UDP server.
+
+    config LOG_UDP_SERVER_IP
+        string "UDP Log Server IP"
+        default "192.168.2.41"
+        depends on LOG_UDP_OUTPUT_ENABLE
+        help
+            IP address of the UDP server to receive logs.
+
+    config LOG_UDP_SERVER_PORT
+        int "UDP Log Server Port"
+        range 1024 65535
+        default 5000
+        depends on LOG_UDP_OUTPUT_ENABLE
+        help
+            UDP port on which the server is listening for logs.
+
+    config LOG_UDP_BUFFER_SIZE
+        int "UDP Log Buffer Size"
+        range 256 4096
+        default 1024
+        depends on LOG_UDP_OUTPUT_ENABLE
+        help
+            Size of the buffer for UDP log messages.
+
+    config LOG_UDP_LOG_LEVEL
+        int "Minimum log level for UDP output"
+        range 0 5
+        default 3
+        depends on LOG_UDP_OUTPUT_ENABLE
+        help
+            Minimum log level to send over UDP (0=NONE, 1=ERROR, 2=WARN, 3=INFO, 4=DEBUG, 5=VERBOSE).
+
+endmenu
