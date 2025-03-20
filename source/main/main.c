@@ -6,10 +6,13 @@
 #include "esp_log.h"
 #include "esp_err.h"
 #include "esp_event.h"
+#include "esp_http_server.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "driver/gpio.h"
 #include "driver/spi_master.h"
+#include "esp_netif.h"              // Add this for network interface definitions
+#include "esp_netif_ip_addr.h"      // Add this for IP2STR and IPSTR macros
 
 // Project components
 #include "ade7880.h"
@@ -17,6 +20,8 @@
 #include "mux_control.h"
 #include "led_control.h"
 #include "log_handler.h"
+#include "ota_service.h"
+#include "network_events.h"         // Add this for NETWORK_EVENT definitions
 
 static const char *TAG = "main";
 
@@ -25,10 +30,47 @@ static const char *TAG = "main";
 #define MUX_INITIAL_SCAN_INTERVAL_MS CONFIG_MUX_INITIAL_SCAN_INTERVAL_MS
 #define MUX_FINAL_CHANNEL            CONFIG_MUX_FINAL_CHANNEL
 
+// HTTP server handle
+httpd_handle_t http_server = NULL;
+
+// HTTP server initialization
+static esp_err_t init_http_server(void)
+{
+    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.max_uri_handlers = 16;  // Increase if you have many handlers
+    
+    ESP_LOGI(TAG, "Starting HTTP server");
+    esp_err_t ret = httpd_start(&http_server, &config);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to start HTTP server: %s", esp_err_to_name(ret));
+        return ret;
+    }
+    
+    return ESP_OK;
+}
+
+// Event handler for network events to start HTTP server
+static void on_network_event(void* arg, esp_event_base_t event_base,
+                            int32_t event_id, void* event_data)
+{
+    if (event_base == NETWORK_EVENT && event_id == NETWORK_EVENT_GOT_IP) {
+        esp_netif_ip_info_t* ip_info = (esp_netif_ip_info_t*) event_data;
+        ESP_LOGI(TAG, "Ethernet Got IP: " IPSTR, IP2STR(&ip_info->ip));
+        
+        // Initialize HTTP server after network is connected
+        if (http_server == NULL) {
+            if (init_http_server() == ESP_OK) {
+                // Initialize OTA service with our HTTP server
+                ota_service_init(http_server);
+            }
+        }
+    }
+}
+
 void app_main(void)
 {
     // Log level
-    esp_log_level_set("*", ESP_LOG_INFO);
+    esp_log_level_set("ota_service", ESP_LOG_DEBUG);
 
     ESP_LOGI(TAG, "EnergyMe - Industry");
     
@@ -50,13 +92,16 @@ void app_main(void)
         return;
     }
     
-    // Initialize Ethernet
+    // Initialize Ethernet - this creates the default event loop
     ret = eth_spi_init();
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Ethernet initialization failed");
         led_control_set_color(RGB_COLOR_RED);  // Show error
         return;
     }
+    
+    // Register for network events - moved after Ethernet init that creates the event loop
+    ESP_ERROR_CHECK(esp_event_handler_register(NETWORK_EVENT, NETWORK_EVENT_GOT_IP, &on_network_event, NULL));
 
     // Initialize log handler to register for network events
     // Note: It will activate logging automatically when network is connected
@@ -125,7 +170,7 @@ void app_main(void)
         // Visual indication that system is working - blink green LED
         led_control_set_rgb(0, 255, 0);  // Full green
         vTaskDelay(100 / portTICK_PERIOD_MS);
-        led_control_set_rgb(0, 100, 0);  // Dim green
+        led_control_set_rgb(0, 20, 0);  // Dim green
 
         // Delay before next reading
         vTaskDelay(1000 / portTICK_PERIOD_MS);
