@@ -20,7 +20,7 @@
 #include "mux_control.h"
 #include "led_control.h"
 #include "log_handler.h"
-#include "ota_service.h"
+#include "http_service.h"
 #include "network_events.h"         // Add this for NETWORK_EVENT definitions
 
 static const char *TAG = "main";
@@ -30,25 +30,6 @@ static const char *TAG = "main";
 #define MUX_INITIAL_SCAN_INTERVAL_MS CONFIG_MUX_INITIAL_SCAN_INTERVAL_MS
 #define MUX_FINAL_CHANNEL            CONFIG_MUX_FINAL_CHANNEL
 
-// HTTP server handle
-httpd_handle_t http_server = NULL;
-
-// HTTP server initialization
-static esp_err_t init_http_server(void)
-{
-    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.max_uri_handlers = 16;  // Increase if you have many handlers
-    
-    ESP_LOGI(TAG, "Starting HTTP server");
-    esp_err_t ret = httpd_start(&http_server, &config);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to start HTTP server: %s", esp_err_to_name(ret));
-        return ret;
-    }
-    
-    return ESP_OK;
-}
-
 // Event handler for network events to start HTTP server
 static void on_network_event(void* arg, esp_event_base_t event_base,
                             int32_t event_id, void* event_data)
@@ -57,21 +38,17 @@ static void on_network_event(void* arg, esp_event_base_t event_base,
         esp_netif_ip_info_t* ip_info = (esp_netif_ip_info_t*) event_data;
         ESP_LOGI(TAG, "Ethernet Got IP: " IPSTR, IP2STR(&ip_info->ip));
         
-        // Initialize HTTP server after network is connected
-        if (http_server == NULL) {
-            if (init_http_server() == ESP_OK) {
-                // Initialize OTA service with our HTTP server
-                ota_service_init(http_server);
-            }
+        // Initialize the HTTP server component directly
+        ESP_LOGI(TAG, "Starting HTTP server");
+        esp_err_t ret = http_server_init();
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "HTTP server initialization failed: %s", esp_err_to_name(ret));
         }
     }
 }
 
 void app_main(void)
 {
-    // Log level
-    esp_log_level_set("ota_service", ESP_LOG_DEBUG);
-
     ESP_LOGI(TAG, "EnergyMe - Industry");
     
     // Initialize LED control
@@ -109,9 +86,6 @@ void app_main(void)
     if (ret != ESP_OK) {
         ESP_LOGW(TAG, "Log handler initialization failed, continuing without UDP logging");
     }
-    
-    // No need to wait for 10 seconds here anymore, as log_handler will initialize
-    // automatically when network is up
     
     // Testing some warning and error messages
     ESP_LOGW(TAG, "This is a warning message");

@@ -258,8 +258,7 @@ void ade7880_read_rms_values(spi_device_handle_t spi_handle)
     }
     
     // Print the concise lines
-    ESP_LOGI(TAG, "%s", phase_currents);
-    ESP_LOGI(TAG, "%s", phase_voltages);
+    ESP_LOGI(TAG, "%s | %s", phase_currents, phase_voltages);
     ESP_LOGI(TAG, "--------------------------------");
 }
 

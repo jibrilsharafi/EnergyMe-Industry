@@ -1,0 +1,70 @@
+menu "HTTP Server Configuration"
+
+    config HTTP_SERVER_ENABLE_AUTH
+        bool "Enable HTTP Digest Authentication"
+        default y
+        help
+            Enable digest authentication for the HTTP server.
+            When disabled, all endpoints are publicly accessible.
+
+    config HTTP_SERVER_AUTH_REALM
+        string "Authentication Realm"
+        default "EnergyMe Industry"
+        depends on HTTP_SERVER_ENABLE_AUTH
+        help
+            Authentication realm for digest authentication.
+
+    config HTTP_SERVER_AUTH_USERNAME
+        string "Authentication Username"
+        default "admin"
+        depends on HTTP_SERVER_ENABLE_AUTH
+        help
+            Username for digest authentication.
+
+    config HTTP_SERVER_AUTH_PASSWORD
+        string "Authentication Password"
+        default "admin"
+        depends on HTTP_SERVER_ENABLE_AUTH
+        help
+            Password for digest authentication.
+
+    config HTTP_SERVER_PORT
+        int "HTTP Server Port"
+        default 80
+        range 1 65535
+        help
+            Port number for the HTTP server.
+
+    config HTTP_SERVER_MAX_URI_HANDLERS
+        int "Maximum URI Handlers"
+        default 20
+        range 5 50
+        help
+            Maximum number of URI handlers that can be registered with the server.
+
+    config HTTP_SERVER_STACK_SIZE
+        int "HTTP Server Stack Size"
+        default 8192
+        help
+            Stack size of the HTTP server task.
+
+    config HTTP_SERVER_TASK_PRIORITY
+        int "HTTP Server Task Priority"
+        default 5
+        range 1 10
+        help
+            Priority of the HTTP server task.
+
+    config HTTP_SERVER_ENABLE_CORS
+        bool "Enable CORS"
+        default y
+        help
+            Enable Cross-Origin Resource Sharing (CORS) support.
+
+    config HTTP_SERVER_ENABLE_LOGS
+        bool "Enable Detailed Logs"
+        default y
+        help
+            Enable detailed logging for HTTP server operations.
+
+endmenu
