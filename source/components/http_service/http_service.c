@@ -437,12 +437,10 @@ static esp_err_t root_handler(httpd_req_t *req) {
 
 // Handler for JavaScript files
 static esp_err_t main_js_handler(httpd_req_t *req) {
-    extern const unsigned char main_js_start[] asm("_binary_main_js_start");
-    extern const unsigned char main_js_end[] asm("_binary_main_js_end");
-    const size_t main_js_size = (main_js_end - main_js_start);
-    
     httpd_resp_set_type(req, "application/javascript");
-    httpd_resp_send(req, (const char *)main_js_start, main_js_size);
+    extern const uint8_t main_js_start[] asm("_binary_main_js_start");
+    extern const uint8_t main_js_end[] asm("_binary_main_js_end");
+    httpd_resp_send(req, (const char *)main_js_start, main_js_end - main_js_start);
     return ESP_OK;
 }
 
