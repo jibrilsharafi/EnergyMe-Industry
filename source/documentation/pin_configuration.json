@@ -1,0 +1,21 @@
+{
+    "4": "RST_ETH",
+    "5": "IRQ_ETH",
+    "6": "MOSI_ETH",
+    "7": "MISO_ETH",
+    "15": "SCLK_ETH",
+    "16": "CS_ETH",
+    "8": "LED_R",
+    "3": "RST_ADE",
+    "9": "CS_ADE",
+    "10": "MOSI_ADE",
+    "11": "MISO_ADE",
+    "12": "SCLK_ADE",
+    "13": "IRQ1_ADE",
+    "14": "IRQ0_ADE",
+    "0": "FLASH",
+    "35": "S3",
+    "36": "S2",
+    "37": "S1",
+    "38": "S0"
+}
